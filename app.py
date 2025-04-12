@@ -2,15 +2,53 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-st.title("📦 Shopee Mass Upload Excel作成アプリ")
+st.title("Mass Upload Excel作成アプリ")
 
-# 1. ファイルアップロード
-basic_info_path = st.file_uploader("STEP1: mass_upload_basic_info*****.xlsx をアップロード", type=["xlsx"], key="basic")
-sales_info_path = st.file_uploader("STEP2: mass_upload_sales_info*****.xlsx をアップロード", type=["xlsx"], key="sales")
-media_info_path = st.file_uploader("STEP3: mass_upload_media_info*****.xlsx をアップロード", type=["xlsx"], key="media")
-template_path = st.file_uploader("STEP4: 出品したい国の mass_upload_***_basic_template.xlsx をアップロード", type=["xlsx"], key="template")
+# 🟡 注意コメント + 補助画像
+st.markdown("### ⚠️ STEP1~4に必要なExcelシートは、ダウンロードした後に保護を解除して、保存し直してから、アップロードしてください")
+st.image("images/unlock_tip.png", width=4000)  # ← 注意画像（ファイル名は自由に）
 
 
+# STEP1
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image("images/step1.png", width=200)
+with col2:
+    st.markdown("### 📄 STEP1-1: mass_upload_basic_info*****.xlsx をダウンロード")
+    st.markdown("### 📄 STEP1-2: mass_upload_basic_info*****.xlsx をアップロード")
+    basic_info_path = st.file_uploader(label="", type=["xlsx"], key="basic")
+
+# STEP2
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image("images/step2.png", width=200)
+with col2:
+    st.markdown("### 📄 STEP2-1: mass_upload_sales_info*****.xlsx をダウンロード")
+    st.markdown("### 📄 STEP2-2: mass_upload_sales_info*****.xlsx をアップロード")
+    sales_info_path = st.file_uploader(label="", type=["xlsx"], key="sales")
+
+
+# STEP3
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image("images/step3.png", width=2000)
+with col2:
+    st.markdown("### 📄 STEP3-1: mass_upload_media_info*****.xlsx をダウンロード")
+    st.markdown("### 📄 STEP3-2: mass_upload_media_info*****.xlsx をアップロード")
+    media_info_path = st.file_uploader(label="", type=["xlsx"], key="media")
+    
+    
+# STEP4
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image("images/step4.png", width=200)
+with col2:
+    st.markdown("### 📄 STEP4-1: 出品したい国の mass_upload_***_basic_template.xlsx をダウンロード")
+    st.markdown("### 📄 STEP4-2: 出品したい国の mass_upload_***_basic_template.xlsx をアップロード")
+    template_path = st.file_uploader(label="", type=["xlsx"], key="template")
+    
+
+    
 # すべてのファイルがアップロードされたときだけ処理を実行
 if basic_info_path and sales_info_path and media_info_path:
     # 2. 各ファイルの読み込み
@@ -281,5 +319,3 @@ if basic_info_path and sales_info_path and media_info_path:
     # 🔚 メモリ解放（使い終わったら閉じる）
     output.close()
     
-
-
