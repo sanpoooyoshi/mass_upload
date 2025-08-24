@@ -41,13 +41,21 @@ with col2:
 # STEP4
 col1, col2 = st.columns([1, 4])
 with col1:
+    st.image("images/step3.png", width=2000)
+with col2:
+    st.markdown("### 📄 STEP3-1: mass_upload_shipment_info*****.xlsx をダウンロード")
+    st.markdown("### 📄 STEP3-2: mass_upload_shipment_info*****.xlsx をアップロード")
+    shipment_info_path = st.file_uploader(label="", type=["xlsx"], key="media")
+    
+    
+# STEP5
+col1, col2 = st.columns([1, 5])
+with col1:
     st.image("images/step4.png", width=200)
 with col2:
-    st.markdown("### 📄 STEP4-1: 出品したい国の mass_upload_***_basic_template.xlsx をダウンロード")
-    st.markdown("### 📄 STEP4-2: 出品したい国の mass_upload_***_basic_template.xlsx をアップロード")
+    st.markdown("### 📄 STEP5-1: 出品したい国の mass_upload_***_basic_template.xlsx をダウンロード")
+    st.markdown("### 📄 STEP5-2: 出品したい国の mass_upload_***_basic_template.xlsx をアップロード")
     template_path = st.file_uploader(label="", type=["xlsx"], key="template")
-    
-
     
 # すべてのファイルがアップロードされたときだけ処理を実行
 if basic_info_path and sales_info_path and media_info_path:
@@ -163,6 +171,7 @@ if basic_info_path and sales_info_path and media_info_path:
     media_df = pd.read_excel(media_info_path, sheet_name="Sheet1")
     sales_df = pd.read_excel(sales_info_path, sheet_name="Sheet1")
     basic_df = pd.read_excel(basic_info_path, sheet_name="Sheet1")
+    shipment_df = pd.read_excel(shipment_info_path, sheet_name="Sheet1")
     template_df = pd.read_excel(template_path, sheet_name="Template")
     template_df["et_title_variation_id"]=1
     # カラム名の一覧を確認
@@ -187,6 +196,9 @@ if basic_info_path and sales_info_path and media_info_path:
     # 貼り付ける値
     variation_names = sales_df["et_title_variation_name"].reset_index(drop=True)
     variation_names =variation_names[5:]
+    # 貼り付ける値
+    weight_num = shipment_df["et_title_product_weight"].reset_index(drop=True)
+    weight_num = weight_num[5:]
     # 貼り付ける値
     skus = sales_df["et_title_variation_sku"].reset_index(drop=True)
     skus = skus[5:]
@@ -227,7 +239,7 @@ if basic_info_path and sales_info_path and media_info_path:
     #template_df.loc[start_row:start_row + num_ids - 1, 'et_title_variation_1'] = variation_1_titles.values
     template_df.loc[start_row:start_row + num_ids - 1, 'et_title_option_for_variation_1'] = variation_names.values
     template_df.loc[start_row:start_row + num_ids - 1, 'et_title_variation_1'] = "type"
-    template_df.loc[start_row:start_row + num_ids - 1, 'ps_weight'] = 1
+    template_df.loc[start_row:start_row + num_ids - 1, 'ps_weight'] = weight_num
     template_df['ps_price'].iloc[5:] = (template_df['ps_price'].iloc[5:].astype(float)* sgd_to_myr_rate).round(2) 
 
 
@@ -319,3 +331,5 @@ if basic_info_path and sales_info_path and media_info_path:
     # 🔚 メモリ解放（使い終わったら閉じる）
     output.close()
     
+
+
