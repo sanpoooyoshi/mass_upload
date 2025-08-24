@@ -65,9 +65,9 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     #media_df = pd.read_excel(media_file)
 
     from openpyxl import load_workbook
-    import openai,os
-    from openai import OpenAI
-    from dotenv import load_dotenv
+    #import openai,os
+    #from openai import OpenAI
+    #from dotenv import load_dotenv
     import pandas as pd
 
 
