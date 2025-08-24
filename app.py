@@ -58,7 +58,7 @@ with col2:
     template_path = st.file_uploader(label="", type=["xlsx"], key="template")
     
 # すべてのファイルがアップロードされたときだけ処理を実行
-if basic_info_path and sales_info_path and media_info_path:
+if basic_info_path and sales_info_path and media_info_path and shipment_info_path:
     # 2. 各ファイルの読み込み
     #basic_df = pd.read_excel(basic_file, sheet_name="Template")
     #sales_df = pd.read_excel(sales_file, sheet_name="Sheet1")
