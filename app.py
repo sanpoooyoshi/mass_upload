@@ -257,7 +257,10 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
 
     # 両方のデータを product_id & variation_name でマージ
     merged = pd.merge(template_df, match_df, on=["product_id", "variation_name"], how="left")
-
+    
+    # 🔧 列名を正規化（|0|0を削除）
+    merged.columns = [str(c).split("|")[0] if c is not None else c for c in merged.columns]
+    
     # image_value を et_title_image_per_variation に格納
     merged["et_title_image_per_variation"].iloc[5:] = merged["image_value"].iloc[5:]
 
