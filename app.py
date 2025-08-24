@@ -127,11 +127,11 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
 
 
     # ファイルパス
-    #basic_info_path = 'sg_basic_info_1101994425_20250410221946.xlsx'
-    #sales_info_path = 'sg_sales_info_1101994425_20250410191659.xlsx'
-    #shipping_info_path = 'sg_shipping_info_1101994425_20250410191659.xlsx'
-    #dts_info_path = 'sg_dts_info_1101994425_20250410191659.xlsx'
-    #media_info_path = 'sg_media_info_1101994425_20250410213356.xlsx'
+    #basic_info_path = 'sg_basic_info_20250410221946.xlsx'
+    #sales_info_path = 'sg_sales_info_20250410191659.xlsx'
+    #shipping_info_path = 'sg_shipping_info_20250410191659.xlsx'
+    #dts_info_path = 'sg_dts_info_20250410191659.xlsx'
+    #media_info_path = 'sg_media_info_20250410213356.xlsx'
     #template_path = 'my_basic_template_.xlsx'
 
 
@@ -140,23 +140,27 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     if template_path is not None:
         wb_output_file = load_workbook(template_path, data_only=True)
     sheet_output_file = wb_output_file["Template"]  
-
+    
     # 結合セル情報の取得
     merged_cells = sheet_output_file.merged_cells.ranges
-
-
-    from collections import defaultdict
-    # ヘッダー行を取得
-    headers = [cell.value for cell in sheet_output_file[1]]
-
+    
+    # 列名を正規化して |0|0, |1|0 などを削除
+    def normalize_colname(name):
+        if name is None:
+            return None
+        return str(name).split("|")[0]
+    
+    # ヘッダー行を取得（1行目を対象）
+    headers = [normalize_colname(cell.value) for cell in sheet_output_file[1]]
+    
     # `ps_item_image_1` ~ `ps_item_image_8` の列インデックスを取得
     image_columns = [idx + 1 for idx, col in enumerate(headers) if col and col.startswith("ps_item_image")]
-
+    
     # `ps_sku_short` の列インデックスを取得
     if "ps_sku_short" in headers:
         sku_column_idx = headers.index("ps_sku_short") + 1
     else:
-        raise ValueError("ps_sku_short列が見つかりません。")
+        raise ValueError(f"ps_sku_short列が見つかりません。headers={headers}")
 
 
     # sales_info Excelファイルを読み込む
