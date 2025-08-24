@@ -45,7 +45,7 @@ with col1:
 with col2:
     st.markdown("### 📄 STEP3-1: mass_upload_shipment_info*****.xlsx をダウンロード")
     st.markdown("### 📄 STEP3-2: mass_upload_shipment_info*****.xlsx をアップロード")
-    shipment_info_path = st.file_uploader(label="", type=["xlsx"], key="media")
+    shipment_info_path = st.file_uploader(label="", type=["xlsx"], key="shipment")
     
     
 # STEP5
