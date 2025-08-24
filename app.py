@@ -41,7 +41,7 @@ with col2:
 
 col1, col2 = st.columns([1, 4])
 with col1:
-    st.image("images/step5.png", width=100)
+    st.image("images/step4.png", width=100)
 with col2:
     st.markdown("### 📄 STEP5: mass_upload_***_basic_template.xlsx をアップロード")
     template_path = st.file_uploader(label="", type=["xlsx"], key="template")
