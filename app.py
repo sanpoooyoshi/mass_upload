@@ -79,8 +79,12 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
 
     # ===== 5. 出力用に列名を戻す =====
     merged = template_df_norm.copy()
-    merged.columns = original_columns
-
+    
+    if len(original_columns) == len(merged.columns):
+        merged.columns = original_columns
+    else:
+        st.warning("⚠️ 列数が一致しないため、元の列名を復元できませんでした。正規化後の列名で出力します。")
+    
     # ===== 6. Excel保存 =====
     wb = load_workbook(template_path, data_only=True)
     sheet = wb["Template"]
