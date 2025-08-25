@@ -126,6 +126,10 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     ], inplace=True)
 
     # ===== 列名を公式に戻す =====
+    st.write(merged.columns)
+    st.write("original_columns")
+    st.write(original_columns)
+    
     merged.columns = original_columns
 
     # ===== Excel 出力 =====
