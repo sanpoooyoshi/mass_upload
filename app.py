@@ -6,10 +6,9 @@ import re
 
 st.title("📦 Shopee Mass Upload Excel作成アプリ")
 
-# 🟡 注意コメント + 補助画像
-st.markdown("### ⚠️ STEP1~4に必要なExcelシートは、ダウンロードした後に保護を解除して、保存し直してから、アップロードしてください")
+# 注意事項
+st.markdown("### ⚠️ STEP1~4に必要なExcelシートは、ダウンロードした後に保護を解除して保存し直してからアップロードしてください")
 st.image("images/unlock_tip.png", width=600)
-
 
 # STEPごとのアップローダー
 basic_info_path = st.file_uploader("STEP1: basic_info", type=["xlsx"], key="basic")
@@ -18,11 +17,9 @@ media_info_path = st.file_uploader("STEP3: media_info", type=["xlsx"], key="medi
 shipment_info_path = st.file_uploader("STEP4: shipment_info", type=["xlsx"], key="shipment")
 template_path = st.file_uploader("STEP5: Shopee公式テンプレート", type=["xlsx"], key="template")
 
-
 # 列名正規化関数
 def normalize_columns(cols):
     return [re.sub(r"\|\d+\|\d+$", "", str(c)) for c in cols]
-
 
 if basic_info_path and sales_info_path and media_info_path and shipment_info_path and template_path:
 
@@ -40,7 +37,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm = template_df.copy()
     template_df_norm.columns = normalize_columns(template_df.columns)
 
-    # 不足列を補完
+    # 不足列を補完（et_title_parent_sku もここで保証される）
     for col in normalize_columns(original_columns):
         if col not in template_df_norm.columns:
             template_df_norm[col] = None
@@ -63,8 +60,10 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
 
     rows_needed = start_row + num_ids
     if len(template_df_norm) < rows_needed:
-        template_df_norm = pd.concat([template_df_norm, pd.DataFrame([{}] * (rows_needed - len(template_df_norm)))],
-                                     ignore_index=True)
+        template_df_norm = pd.concat(
+            [template_df_norm, pd.DataFrame([{}] * (rows_needed - len(template_df_norm)))],
+            ignore_index=True
+        )
 
     # ===== 値を埋め込み =====
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_integration_no"] = product_ids.values
@@ -78,6 +77,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_1"] = "type"
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_weight"] = weight_num.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "channel_id.28057"] = "On"
+
     template_df_norm["ps_price"].iloc[start_row:] = (
         template_df_norm["ps_price"].iloc[start_row:].astype(float) * sgd_to_myr_rate
     ).round(2)
@@ -110,16 +110,13 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
 
     # ===== 不要列削除 =====
     merged.drop(columns=[
-        "et_title_product_description", 
-        "ps_item_cover_image_", 
-        "et_title_variation_id",   # 👈 追加削除
-        "product_id"               # 👈 追加削除
-    ], inplace=True)
+        "et_title_product_description",
+        "ps_item_cover_image_",
+        "et_title_variation_id",
+        "product_id"
+    ], inplace=True, errors="ignore")
 
     # ===== 列名を公式に戻す =====
-    st.write(merged.columns)
-    st.write("original_columns")
-    st.write(original_columns)
     merged.columns = original_columns
 
     # ===== Excel 出力 =====
