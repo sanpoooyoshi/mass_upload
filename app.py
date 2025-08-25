@@ -112,7 +112,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     st.write(merged.columns)
     st.write("original_columns")
     st.write(original_columns)
-    merged.columns = 
+    merged.columns = original_columns
 
     # ===== Excel 出力 =====
     wb = load_workbook(template_path, data_only=True)
