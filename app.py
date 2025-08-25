@@ -60,13 +60,23 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df = pd.read_excel(template_path, sheet_name="Template")
 
     # 元の列名を保存（公式フォーマット）
-    original_columns = template_df.columns
+    # 列名保持（Shopee公式の|0|0付き）
+    original_columns = template_df.columns  
+    
+    # 正規化（内部処理用）
+    def normalize_columns(cols):
+        return [re.sub(r"\|\d+\|\d+$", "", str(c)) for c in cols]
+    
+    template_df_norm = template_df.copy()
+    template_df_norm.columns = normalize_columns(template_df.columns)
+    
+    # === 値貼り付け ===
+    num_ids = len(product_ids)
+    
+    # 行数チェック
+    print("貼り付け先:", start_row, "～", start_row+num_ids-1)
+    print("product_ids件数:", num_ids)
 
-    # 列名正規化関数
-    def normalize_columns(df):
-        df = df.copy()
-        df.columns = df.columns.str.replace(r"\|\d+\|\d+$", "", regex=True)
-        return df
 
     # 正規化版で処理
     template_df_norm = normalize_columns(template_df)
@@ -96,7 +106,10 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     # ===== 画像や説明文の統合処理（省略：現行の処理をそのまま使う） =====
 
     # 最後に公式列名を復元
-    template_df_norm.columns = original_columns
+    #template_df_norm.columns = original_columns
+
+    # === 公式の列名に戻す ===
+    template_df_norm = template_df_norm.reindex(columns=original_columns)  
 
     # Excel出力
     wb = load_workbook(template_path, data_only=True)
