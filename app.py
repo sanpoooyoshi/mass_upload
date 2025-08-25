@@ -57,7 +57,8 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     variation_stocks = sales_df["et_title_variation_stock"].reset_index(drop=True)[5:]
     product_names = sales_df["et_title_product_name"].reset_index(drop=True)[5:]
     weight_num = shipment_df["et_title_product_weight"].reset_index(drop=True)[5:]
-
+    image_per_variation = media_df["et_title_image_per_variation"].reset_index(drop=True)[5:]
+    
     sgd_to_myr_rate = 3.4
     num_ids = len(product_ids)
 
@@ -76,6 +77,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_option_for_variation_1"] = variation_names.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_1"] = "type"
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_weight"] = weight_num.values
+    template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_image_per_variation"] = image_per_variation.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "channel_id.28057"] = "On"
     template_df_norm["ps_price"].iloc[start_row:] = (
         template_df_norm["ps_price"].iloc[start_row:].astype(float) * sgd_to_myr_rate
