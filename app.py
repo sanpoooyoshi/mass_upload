@@ -71,8 +71,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm = template_df.copy()
     template_df_norm.columns = normalize_columns(template_df.columns)
     
-    # === 値貼り付け ===
-    num_ids = len(product_ids)
+
     
     # 行数チェック
     print("貼り付け先:", start_row, "～", start_row+num_ids-1)
@@ -93,6 +92,9 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     product_names = sales_df["et_title_product_name"].reset_index(drop=True)[5:]
     weight_num = shipment_df["et_title_product_weight"].reset_index(drop=True)[5:]
 
+    # === 値貼り付け ===
+    num_ids = len(product_ids)
+    
     # 値を転記
     template_df_norm.loc[start_row:start_row+len(product_ids)-1, "et_title_variation_integration_no"] = product_ids.values
     #template_df_norm.loc[start_row:start_row+len(product_ids)-1, "et_title_variation_id"] = variation_ids.values
