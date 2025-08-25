@@ -85,7 +85,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     parent_skus.rename(columns={"et_title_product_id": "product_id"}, inplace=True)
     template_df_norm["product_id"] = template_df_norm["et_title_variation_integration_no"]
     merged = pd.merge(template_df_norm, parent_skus, on="product_id", how="left")
-    merged.loc[start_row:start_row + num_ids - 1, "et_title_parent_sku"] = merged["et_title_parent_sku"].iloc[start_row:]
+    merged.loc[start_row:start_row + num_ids - 1, "ps_sku_parent_short"] = merged["et_title_parent_sku"].iloc[start_row:]
 
     # ===== 画像情報統合 =====
     top_image_df = media_df[[
