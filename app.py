@@ -70,6 +70,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_integration_no"] = product_ids.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_id"] = variation_ids.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_product_name"] = product_names.values
+    template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_parent_sku"] = parent_skus.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_sku_short"] = skus.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_price"] = variation_prices.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_stock"] = variation_stocks.values
