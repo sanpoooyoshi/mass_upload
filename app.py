@@ -26,7 +26,7 @@ def normalize_columns(cols):
 
 if basic_info_path and sales_info_path and media_info_path and shipment_info_path and template_path:
 
-    # データ読み込み
+    # ===== データ読み込み =====
     basic_df = pd.read_excel(basic_info_path, sheet_name="Sheet1")
     sales_df = pd.read_excel(sales_info_path, sheet_name="Sheet1")
     media_df = pd.read_excel(media_info_path, sheet_name="Sheet1")
@@ -57,15 +57,16 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     variation_stocks = sales_df["et_title_variation_stock"].reset_index(drop=True)[5:]
     product_names = sales_df["et_title_product_name"].reset_index(drop=True)[5:]
     weight_num = shipment_df["et_title_product_weight"].reset_index(drop=True)[5:]
-    image_per_variation = media_df["et_title_image_per_variation"].reset_index(drop=True)[5:]
-    
+
     sgd_to_myr_rate = 3.4
     num_ids = len(product_ids)
 
     rows_needed = start_row + num_ids
     if len(template_df_norm) < rows_needed:
-        template_df_norm = pd.concat([template_df_norm, pd.DataFrame([{}] * (rows_needed - len(template_df_norm)))],
-                                     ignore_index=True)
+        template_df_norm = pd.concat(
+            [template_df_norm, pd.DataFrame([{}] * (rows_needed - len(template_df_norm)))],
+            ignore_index=True
+        )
 
     # ===== 値を埋め込み =====
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_integration_no"] = product_ids.values
@@ -77,19 +78,51 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_option_for_variation_1"] = variation_names.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_1"] = "type"
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_weight"] = weight_num.values
-    template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_image_per_variation"] = image_per_variation.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "channel_id.28057"] = "On"
+
     template_df_norm["ps_price"].iloc[start_row:] = (
         template_df_norm["ps_price"].iloc[start_row:].astype(float) * sgd_to_myr_rate
     ).round(2)
 
+    # ===== Variationごとのオプション画像統合 =====
+    option_cols = [c for c in media_df.columns if c.startswith("et_title_option_") and c.endswith("_for_variation_1")]
+    image_cols = [c for c in media_df.columns if c.startswith("et_title_option_image_") and c.endswith("_for_variation_1")]
+
+    option_image_map = []
+    for _, row in media_df.iterrows():
+        pid = row["et_title_product_id"]
+        for ocol, icol in zip(option_cols, image_cols):
+            option_name = row[ocol]
+            option_img = row[icol]
+            if pd.notna(option_name) and pd.notna(option_img):
+                option_image_map.append({
+                    "product_id": pid,
+                    "variation_name": option_name,
+                    "variation_image": option_img
+                })
+
+    option_image_df = pd.DataFrame(option_image_map)
+
+    template_df_norm["product_id"] = template_df_norm["et_title_variation_integration_no"]
+    template_df_norm["variation_name"] = template_df_norm["et_title_option_for_variation_1"]
+
+    merged = pd.merge(template_df_norm, option_image_df, on=["product_id", "variation_name"], how="left")
+
+    merged.loc[start_row:start_row + num_ids - 1, "et_title_image_per_variation"] = \
+        merged.loc[start_row:start_row + num_ids - 1, "variation_image"]
+
     # ===== 親SKU統合 =====
     parent_skus.rename(columns={"et_title_product_id": "product_id"}, inplace=True)
-    template_df_norm["product_id"] = template_df_norm["et_title_variation_integration_no"]
-    merged = pd.merge(template_df_norm, parent_skus, on="product_id", how="left")
+    merged = pd.merge(merged, parent_skus, on="product_id", how="left")
     merged.loc[start_row:start_row + num_ids - 1, "ps_sku_parent_short"] = merged["et_title_parent_sku"].iloc[start_row:]
 
-    # ===== 画像情報統合 =====
+    # ===== 商品説明統合 =====
+    product_description_df = basic_df[["et_title_product_id", "et_title_product_description"]].copy()
+    product_description_df.rename(columns={"et_title_product_id": "product_id"}, inplace=True)
+    merged = pd.merge(merged, product_description_df, on="product_id", how="left")
+    merged["ps_product_description"].iloc[start_row:] = merged["et_title_product_description"].iloc[start_row:]
+
+    # ===== カバー画像統合 =====
     top_image_df = media_df[[
         "et_title_product_id", "ps_item_cover_image",
         "ps_item_image.1", "ps_item_image.2", "ps_item_image.3",
@@ -107,14 +140,10 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
         merged[f"ps_item_image_{i}"].iloc[start_row:] = merged[f"ps_item_image.{i}"].iloc[start_row:]
         merged.drop(columns=[f"ps_item_image.{i}"], inplace=True)
 
-    # ===== 商品説明統合 =====
-    product_description_df = basic_df[["et_title_product_id", "et_title_product_description"]].copy()
-    product_description_df.rename(columns={"et_title_product_id": "product_id"}, inplace=True)
-    merged = pd.merge(merged, product_description_df, on="product_id", how="left")
-    merged["ps_product_description"].iloc[start_row:] = merged["et_title_product_description"].iloc[start_row:]
-
     # ===== 不要列削除 =====
     merged.drop(columns=[
+        "variation_name",
+        "variation_image",
         "et_title_product_description",
         "ps_item_cover_image_",
         "et_title_variation_id",
@@ -123,10 +152,6 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     ], inplace=True)
 
     # ===== 列名を公式に戻す =====
-    st.write(merged.columns)
-    st.write("original_columns")
-    st.write(original_columns)
-    
     merged.columns = original_columns
 
     # ===== Excel 出力 =====
