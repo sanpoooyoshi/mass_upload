@@ -51,6 +51,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     product_ids = sales_df["et_title_product_id"].reset_index(drop=True)[5:]
     variation_ids = sales_df["et_title_variation_id"].reset_index(drop=True)[5:]
     variation_names = sales_df["et_title_variation_name"].reset_index(drop=True)[5:]
+    parent_skus = basic_df["et_title_parent_sku"].reset_index(drop=True)[5:]
     skus = sales_df["et_title_variation_sku"].reset_index(drop=True)[5:]
     variation_prices = sales_df["et_title_variation_price"].reset_index(drop=True)[5:]
     variation_stocks = sales_df["et_title_variation_stock"].reset_index(drop=True)[5:]
@@ -69,12 +70,14 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_integration_no"] = product_ids.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_id"] = variation_ids.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_product_name"] = product_names.values
+    template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_parent_sku"] = parent_skus.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_sku_short"] = skus.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_price"] = variation_prices.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_stock"] = variation_stocks.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_option_for_variation_1"] = variation_names.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_1"] = "type"
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_weight"] = weight_num.values
+    template_df_norm.loc[start_row:start_row + num_ids - 1, "channel_id.28057"] = "On"
     template_df_norm["ps_price"].iloc[start_row:] = (
         template_df_norm["ps_price"].iloc[start_row:].astype(float) * sgd_to_myr_rate
     ).round(2)
