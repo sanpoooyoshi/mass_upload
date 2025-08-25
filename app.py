@@ -105,8 +105,13 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     merged = pd.merge(merged, product_description_df, on="product_id", how="left")
     merged["ps_product_description"].iloc[start_row:] = merged["et_title_product_description"].iloc[start_row:]
 
-    # 不要列削除
-    merged.drop(columns=["et_title_product_description", "ps_item_cover_image_"], inplace=True)
+    # ===== 不要列削除 =====
+    merged.drop(columns=[
+        "et_title_product_description", 
+        "ps_item_cover_image_", 
+        "et_title_variation_id",   # 👈 追加削除
+        "product_id"               # 👈 追加削除
+    ], inplace=True)
 
     # ===== 列名を公式に戻す =====
     st.write(merged.columns)
