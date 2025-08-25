@@ -73,7 +73,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     
 
     # 正規化版で処理
-    template_df_norm = normalize_columns(template_df)
+    #template_df_norm = normalize_columns(template_df)
 
     # 貼り付け開始行
     start_row = 5
