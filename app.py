@@ -10,55 +10,20 @@ st.title("📦 Shopee Mass Upload Excel作成アプリ")
 st.markdown("### ⚠️ STEP1~4に必要なExcelシートは、ダウンロードした後に保護を解除して、保存し直してから、アップロードしてください")
 st.image("images/unlock_tip.png", width=600)
 
-# STEP1
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("images/step1.png", width=100)
-with col2:
-    st.markdown("### 📄 STEP1: mass_upload_basic_info*****.xlsx をアップロード")
-    basic_info_path = st.file_uploader(label="", type=["xlsx"], key="basic")
 
-# STEP2
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("images/step2.png", width=100)
-with col2:
-    st.markdown("### 📄 STEP2: mass_upload_sales_info*****.xlsx をアップロード")
-    sales_info_path = st.file_uploader(label="", type=["xlsx"], key="sales")
-
-# STEP3
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("images/step3.png", width=100)
-with col2:
-    st.markdown("### 📄 STEP3: mass_upload_media_info*****.xlsx をアップロード")
-    media_info_path = st.file_uploader(label="", type=["xlsx"], key="media")
-
-# STEP4
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("images/step4.png", width=100)
-with col2:
-    st.markdown("### 📄 STEP4: mass_upload_shipment_info*****.xlsx をアップロード")
-    shipment_info_path = st.file_uploader(label="", type=["xlsx"], key="shipment")
-
-# STEP5
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.image("images/step4.png", width=100)
-with col2:
-    st.markdown("### 📄 STEP5: 出品したい国の mass_upload_***_basic_template.xlsx をアップロード")
-    template_path = st.file_uploader(label="", type=["xlsx"], key="template")
+# STEPごとのアップローダー
+basic_info_path = st.file_uploader("STEP1: basic_info", type=["xlsx"], key="basic")
+sales_info_path = st.file_uploader("STEP2: sales_info", type=["xlsx"], key="sales")
+media_info_path = st.file_uploader("STEP3: media_info", type=["xlsx"], key="media")
+shipment_info_path = st.file_uploader("STEP4: shipment_info", type=["xlsx"], key="shipment")
+template_path = st.file_uploader("STEP5: Shopee公式テンプレート", type=["xlsx"], key="template")
 
 
-# 列名正規化関数（|0|0 や |1|1 を削除）
+# 列名正規化関数
 def normalize_columns(cols):
     return [re.sub(r"\|\d+\|\d+$", "", str(c)) for c in cols]
 
 
-# =============================
-# 実行処理
-# =============================
 if basic_info_path and sales_info_path and media_info_path and shipment_info_path and template_path:
 
     # データ読み込み
@@ -68,22 +33,21 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     shipment_df = pd.read_excel(shipment_info_path, sheet_name="Sheet1")
     template_df = pd.read_excel(template_path, sheet_name="Template")
 
-    # 公式の列名を保存
-    original_columns = template_df.columns  
+    # 公式列名を保存
+    original_columns = template_df.columns
 
-    # 正規化した列名に置換して処理用コピーを作成
+    # 正規化して処理用にコピー
     template_df_norm = template_df.copy()
     template_df_norm.columns = normalize_columns(template_df.columns)
 
-    # 不足列を追加して original_columns と列数を揃える
+    # 不足列を補完
     for col in normalize_columns(original_columns):
         if col not in template_df_norm.columns:
             template_df_norm[col] = None
-
-    # 列順も合わせる
     template_df_norm = template_df_norm[normalize_columns(original_columns)]
 
-    # ===== データ埋め込み処理 =====
+    # ===== 各データの抽出 =====
+    start_row = 5
     product_ids = sales_df["et_title_product_id"].reset_index(drop=True)[5:]
     variation_ids = sales_df["et_title_variation_id"].reset_index(drop=True)[5:]
     variation_names = sales_df["et_title_variation_name"].reset_index(drop=True)[5:]
@@ -94,18 +58,16 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     weight_num = shipment_df["et_title_product_weight"].reset_index(drop=True)[5:]
 
     sgd_to_myr_rate = 3.4
-    start_row = 5
     num_ids = len(product_ids)
 
     rows_needed = start_row + num_ids
     if len(template_df_norm) < rows_needed:
-        extra_rows = rows_needed - len(template_df_norm)
-        empty_rows = pd.DataFrame([{}] * extra_rows)
-        template_df_norm = pd.concat([template_df_norm, empty_rows], ignore_index=True)
+        template_df_norm = pd.concat([template_df_norm, pd.DataFrame([{}] * (rows_needed - len(template_df_norm)))],
+                                     ignore_index=True)
 
-    # 値を埋め込む
+    # ===== 値を埋め込み =====
     template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_integration_no"] = product_ids.values
-    #template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_id"] = variation_ids.values
+    template_df_norm.loc[start_row:start_row + num_ids - 1, "et_title_variation_id"] = variation_ids.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_product_name"] = product_names.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_sku_short"] = skus.values
     template_df_norm.loc[start_row:start_row + num_ids - 1, "ps_price"] = variation_prices.values
@@ -117,36 +79,55 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
         template_df_norm["ps_price"].iloc[start_row:].astype(float) * sgd_to_myr_rate
     ).round(2)
 
-    # === 列名を公式の Shopee テンプレートに戻す ===
-    st.write(original_columns)
-    st.write("template")
-    st.write(template_df_norm.columns)
+    # ===== 画像情報統合 =====
+    top_image_df = media_df[[
+        "et_title_product_id", "ps_item_cover_image",
+        "ps_item_image.1", "ps_item_image.2", "ps_item_image.3",
+        "ps_item_image.4", "ps_item_image.5", "ps_item_image.6",
+        "ps_item_image.7", "ps_item_image.8"
+    ]].copy()
+    top_image_df.rename(columns={
+        "et_title_product_id": "product_id",
+        "ps_item_cover_image": "ps_item_cover_image_"
+    }, inplace=True)
 
-    
-    template_df_norm.columns = original_columns
+    template_df_norm["product_id"] = template_df_norm["et_title_variation_integration_no"]
+    merged = pd.merge(template_df_norm, top_image_df, on="product_id", how="left")
 
-    # =============================
-    # Excel 出力処理
-    # =============================
+    merged["ps_item_cover_image"].iloc[start_row:] = merged["ps_item_cover_image_"].iloc[start_row:]
+    for i in range(1, 9):
+        merged[f"ps_item_image_{i}"].iloc[start_row:] = merged[f"ps_item_image.{i}"].iloc[start_row:]
+        merged.drop(columns=[f"ps_item_image.{i}"], inplace=True)
+
+    # ===== 商品説明統合 =====
+    product_description_df = basic_df[["et_title_product_id", "et_title_product_description"]].copy()
+    product_description_df.rename(columns={"et_title_product_id": "product_id"}, inplace=True)
+    merged = pd.merge(merged, product_description_df, on="product_id", how="left")
+    merged["ps_product_description"].iloc[start_row:] = merged["et_title_product_description"].iloc[start_row:]
+
+    # 不要列削除
+    merged.drop(columns=["et_title_product_description", "ps_item_cover_image_"], inplace=True)
+
+    # ===== 列名を公式に戻す =====
+    merged.columns = original_columns
+
+    # ===== Excel 出力 =====
     wb = load_workbook(template_path, data_only=True)
     sheet = wb["Template"]
 
-    # データをシートに書き込み
-    for row_idx, row_data in enumerate(template_df_norm.values, start=1):
+    for row_idx, row_data in enumerate(merged.values, start=1):
         for col_idx, value in enumerate(row_data, start=1):
             sheet.cell(row=row_idx, column=col_idx, value=value)
 
-    # メモリに保存
     output = BytesIO()
     wb.save(output)
     output.seek(0)
 
-    # ダウンロードボタン
     st.download_button(
-        label="📥 処理が完了しました。ここをクリックしてExcelファイルをダウンロード",
+        label="📥 処理が完了しました。ここをクリックしてExcelをダウンロード",
         data=output,
         file_name="output_file.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
     output.close()
