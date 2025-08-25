@@ -87,8 +87,8 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
         st.success("✅ 列数は一致しています")
     else:
         st.error("⚠️ 列数が不一致です")
-        st.write("template_df_norm columns:", template_df_norm.columns.tolist()[:20])
-        st.write("original_columns:", original_columns[:20])
+        st.write("template_df_norm columns:", template_df_norm.columns.tolist())
+        st.write("original_columns:", original_columns)
 
     
     if len(original_columns) == len(merged.columns):
