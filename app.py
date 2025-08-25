@@ -109,7 +109,10 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     merged.drop(columns=["et_title_product_description", "ps_item_cover_image_"], inplace=True)
 
     # ===== 列名を公式に戻す =====
-    merged.columns = original_columns
+    st.write(merged.columns)
+    st.write("original_columns")
+    st.write(original_columns)
+    merged.columns = 
 
     # ===== Excel 出力 =====
     wb = load_workbook(template_path, data_only=True)
