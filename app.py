@@ -118,6 +118,11 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     ).round(2)
 
     # === 列名を公式の Shopee テンプレートに戻す ===
+    print(original_columns)
+    print("template")
+    print(template_df_norm.columns)
+
+    
     template_df_norm.columns = original_columns
 
     # =============================
