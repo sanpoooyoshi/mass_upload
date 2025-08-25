@@ -138,8 +138,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
         "et_title_product_description",
         "et_title_variation_id",
         "product_id",
-        "et_title_parent_sku",
-        "channel_id.28057"
+        "et_title_parent_sku"
     ], inplace=True)
 
     # ===== 列名を公式に戻す =====
