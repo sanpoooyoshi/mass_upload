@@ -74,7 +74,7 @@ if basic_info_path and sales_info_path and media_info_path and shipment_info_pat
     # 貼り付け開始行
     start_row = 5
     product_ids = sales_df["et_title_product_id"].reset_index(drop=True)[5:]
-    variation_ids = sales_df["et_title_variation_id"].reset_index(drop=True)[5:]
+    #variation_ids = sales_df["et_title_variation_id"].reset_index(drop=True)[5:]
     variation_names = sales_df["et_title_variation_name"].reset_index(drop=True)[5:]
     skus = sales_df["et_title_variation_sku"].reset_index(drop=True)[5:]
     variation_prices = sales_df["et_title_variation_price"].reset_index(drop=True)[5:]
