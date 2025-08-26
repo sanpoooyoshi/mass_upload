@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# 📦 Shopee Mass Upload Excel作成アプリ（フル版・行拡張 修正済み）
+# 📦 Shopee Mass Upload Excel作成アプリ（フル版・自動流し込み対応）
 # - media_info: Option 1〜30 Name/Image を縦持ち化（実列名に対応）
-# - product_id × variation_name（正規化）で突合
-# - 公式テンプレの「Image per Variation」列へURLを書き込み
+# - product_id × variation_name（正規化）で突合 → Image per Variation へ自動流し込み
 # - 商品説明を結合
 # - 未マッチ一覧CSV / media候補カタログCSVを出力
 # - ヘッダー破損防止のため、Excelは「2行目から」書き込み
@@ -16,7 +15,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 
 st.set_page_config(page_title="Shopee Mass Upload Builder", layout="wide")
-st.title("📦 Shopee Mass Upload Excel作成アプリ（フル版）")
+st.title("📦 Shopee Mass Upload Excel作成アプリ（自動流し込み対応）")
 
 # 🟡 注意コメント + 補助画像
 st.markdown("### ⚠️ STEP1~4のExcelは、**保護解除→保存し直し**のうえアップロードしてください。")
@@ -38,20 +37,16 @@ def normalize_columns(cols):
 
 def clean_name(x):
     """バリエーション名の正規化"""
-    if pd.isna(x):
-        return None
-    s = unicodedata.normalize("NFKC", str(x))
-    s = s.replace("\u3000", " ")
-    s = re.sub(r"\s+", " ", s).replace("\r", " ").replace("\n", " ").replace("\t", " ")
+    if pd.isna(x): return None
+    s = unicodedata.normalize("NFKC", str(x)).replace("\u3000", " ")
+    s = re.sub(r"\s+", " ", s).replace("\r"," ").replace("\n"," ").replace("\t"," ")
     return s.strip() or None
 
 def to_str_id(x):
     """Excel数値→文字列化（12345.0 → 12345）"""
-    if pd.isna(x):
-        return None
+    if pd.isna(x): return None
     s = str(x).strip()
-    if re.fullmatch(r"\d+\.0", s):
-        s = s[:-2]
+    if re.fullmatch(r"\d+\.0", s): s = s[:-2]
     return s
 
 def find_image_per_variation_col(norm_cols):
@@ -63,11 +58,7 @@ def find_image_per_variation_col(norm_cols):
     return None
 
 def detect_pairs_media_columns(media_df):
-    """
-    media_info の実列名に合わせた Name/Image の30ペアを抽出
-    - Name : et_title_option_{1..30}_for_variation_1
-    - Image: et_title_option_image_{1..30}_for_variation_1
-    """
+    """media_info の実列名に合わせた Name/Image の30ペアを抽出"""
     pairs = []
     for i in range(1, 30 + 1):
         name_col = f"et_title_option_{i}_for_variation_1"
@@ -77,10 +68,7 @@ def detect_pairs_media_columns(media_df):
     return pairs
 
 def df_to_csv_bytes(df: pd.DataFrame) -> BytesIO:
-    buf = BytesIO()
-    df.to_csv(buf, index=False, encoding="utf-8-sig")
-    buf.seek(0)
-    return buf
+    buf = BytesIO(); df.to_csv(buf, index=False, encoding="utf-8-sig"); buf.seek(0); return buf
 
 # === メイン処理 ===
 if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, template_path]):
@@ -104,7 +92,7 @@ if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, t
     template_df_norm = template_df.copy()
     template_df_norm.columns = original_cols_normal
 
-    # === ★核心ブロック：行拡張（ここがキモ） ===
+    # === 行拡張（核心） ===
     start = INSTRUCTION_ROWS                 # データ開始位置（説明行の直後）
     n = max(0, len(sales_df) - start)        # データ行数
     rows_needed = start + n
@@ -132,10 +120,10 @@ if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, t
     template_df_norm.loc[sl, "et_title_option_for_variation_1"]   = sales_df["et_title_variation_name"].iloc[start:].values
     if "et_title_variation_1" in template_df_norm.columns:
         template_df_norm.loc[sl, "et_title_variation_1"]          = "type"
-    if "ps_weight" in template_df_norm.columns:
-        template_df_norm.loc[sl, "ps_weight"]                     = shipment_df["et_title_product_weight"].iloc[start:].values
+    if "ps_weight" in template_df_norm.columns and "et_title_product_weight" in shipment_df.columns:
+        template_df_norm.loc[sl, "ps_weight"] = shipment_df["et_title_product_weight"].iloc[start:].values
     if "channel_id.28057" in template_df_norm.columns:
-        template_df_norm.loc[sl, "channel_id.28057"]              = "On"
+        template_df_norm.loc[sl, "channel_id.28057"] = "On"
 
     # 価格換算オプション
     with st.expander("💱 価格換算（SGD→MYR）"):
@@ -158,7 +146,7 @@ if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, t
         tmp = tmp[(tmp["product_id"].notna()) & (tmp["variation_name"].notna()) & (tmp["variation_image"] != "")]
         media_long_list.append(tmp[["product_id", "variation_name", "variation_image"]])
     media_long = pd.concat(media_long_list, ignore_index=True) if media_long_list else pd.DataFrame(columns=["product_id","variation_name","variation_image"])
-    # 数値以外の product_id（ヘッダー混入など）を排除
+    # 数値以外の product_id（ヘッダー混入など）を排除 & 重複キーは最初を採用
     media_long = media_long[media_long["product_id"].str.fullmatch(r"\d+")]
     media_long = (media_long
                   .sort_values(["product_id", "variation_name"])
@@ -170,23 +158,24 @@ if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, t
     variation_map["variation_name"] = variation_map["et_title_variation_name"].map(clean_name)
     variation_map = variation_map[["product_id", "variation_name"]].dropna().drop_duplicates()
 
-    # 画像URLを合流
+    # ======== ★ 自動流し込みロジック ★ ========
+    # 1) (product_id × variation_name) で media_long と結合し URL を得る
     img_map = variation_map.merge(media_long, on=["product_id", "variation_name"], how="left")
 
-    # ===== Template側に画像を入れる =====
+    # 2) テンプレ側にも同じキー列を作り、img_map を合流
     template_df_norm["product_id"]     = template_df_norm["et_title_variation_integration_no"].map(to_str_id)
     template_df_norm["variation_name"] = template_df_norm["et_title_option_for_variation_1"].map(clean_name)
-
-    image_per_var_col = find_image_per_variation_col(original_cols_normal)
-    if not image_per_var_col:
-        st.error("テンプレートに『Image per Variation』列が見つかりません。")
-        st.stop()
-
     template_df_norm = template_df_norm.merge(
         img_map[["product_id", "variation_name", "variation_image"]],
         on=["product_id", "variation_name"],
         how="left"
     )
+
+    # 3) 実在の「Image per Variation」列を特定し、開始行以降へURLを書き込み
+    image_per_var_col = find_image_per_variation_col(original_cols_normal)
+    if not image_per_var_col:
+        st.error("テンプレートに『Image per Variation』列が見つかりません。")
+        st.stop()
     template_df_norm.loc[sl, image_per_var_col] = template_df_norm.loc[sl, "variation_image"].values
 
     # ===== 商品説明を結合 =====
@@ -204,7 +193,6 @@ if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, t
     template_df_norm.columns = original_columns
 
     # ===== 未マッチCSV / media候補カタログCSV =====
-    # デバッグ用（raw名も持つ）
     variation_map_dbg = sales_df[["et_title_product_id", "et_title_product_name", "et_title_variation_name"]].copy()
     variation_map_dbg["product_id"] = variation_map_dbg["et_title_product_id"].map(to_str_id)
     variation_map_dbg["variation_name_clean"] = variation_map_dbg["et_title_variation_name"].map(clean_name)
@@ -231,16 +219,12 @@ if all([basic_info_path, sales_info_path, media_info_path, shipment_info_path, t
     # ===== Excelへ安全に書き戻し（2行目から書く） =====
     wb = load_workbook(template_path, data_only=True)
     sh = wb["Template"]
-
     for r_idx, row in enumerate(template_df_norm.itertuples(index=False, name=None), start=2):
         for c_idx, val in enumerate(row, start=1):
-            if isinstance(val, float) and np.isnan(val):
-                val = None
+            if isinstance(val, float) and np.isnan(val): val = None
             sh.cell(row=r_idx, column=c_idx, value=val)
 
-    out_xlsx = BytesIO()
-    wb.save(out_xlsx)
-    out_xlsx.seek(0)
+    out_xlsx = BytesIO(); wb.save(out_xlsx); out_xlsx.seek(0)
 
     # CSVバッファ
     unmatched_csv = df_to_csv_bytes(unmatched)
