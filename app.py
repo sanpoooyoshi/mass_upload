@@ -15,6 +15,100 @@ from io import BytesIO
 from openpyxl import load_workbook
 
 st.set_page_config(page_title="Shopee Mass Upload Builder", layout="wide")
+
+# === Googleログインゲート ===
+GOOGLE_LOGO_B64 = (
+    "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIj4"
+    "KPHBhdGggZmlsbD0iI0ZGQzEwNyIgZD0iTTQzLjYxMSwyMC4wODNINDJWMjBIMjR2OGgxMS4zMDNjLTEuNjQ5LDQuNjU3LTYuMDgsOC0xMS4zMDMs"
+    "OGMtNi42MjcsMC0xMi01LjM3My0xMi0xMmMwLTYuNjI3LDUuMzczLTEyLDEyLTEyYzMuMDU5LDAsNS44NDIsMS4xNTQsNy45NjEsMy4wMzlsNS42"
+    "NTctNS42NTdDMzQuMDQ2LDYuMDUzLDI5LjI2OCw0LDI0LDRDMTIuOTU1LDQsNCwxMi45NTUsNCwyNGMwLDExLjA0NSw4Ljk1NSwyMCwyMCwyMGMx"
+    "MS4wNDUsMCwyMC04Ljk1NSwyMC0yMEM0NCwyMi42NTksNDMuODYyLDIxLjM1LDQzLjYxMSwyMC4wODN6Ii8+CjxwYXRoIGZpbGw9IiNGRjNEMDAi"
+    "IGQ9Ik02LjMwNiwxNC42OTFsNi41NzEsNC44MTlDMTQuNjU1LDE1LjEwOCwxOC45NjEsMTIsMjQsMTJjMy4wNTksMCw1Ljg0MiwxLjE1NCw3Ljk2"
+    "MSwzLjAzOWw1LjY1Ny01LjY1N0MzNC4wNDYsNi4wNTMsMjkuMjY4LDQsMjQsNEMxNi4zMTgsNCw5LjY1Niw4LjMzNyw2LjMwNiwxNC42OTF6Ii8+"
+    "CjxwYXRoIGZpbGw9IiM0Q0FGNTAiIGQ9Ik0yNCw0NGM1LjE2NiwwLDkuODYtMS45NzcsMTMuNDA5LTUuMTkybC02LjE5LTUuMjM4QzI5LjIxMSwz"
+    "NS4wOTEsMjYuNzE1LDM2LDI0LDM2Yy01LjIwMiwwLTkuNjE5LTMuMzE3LTExLjI4My03Ljk0NmwtNi41MjIsNS4wMjVDOS41MDUsMzkuNTU2LDE2"
+    "LjIyNyw0NCwyNCw0NHoiLz4KPHBhdGggZmlsbD0iIzE5NzZEMiIgZD0iTTQzLjYxMSwyMC4wODNINDJWMjBIMjR2OGgxMS4zMDNjLTAuNzkyLDIu"
+    "MjM3LTIuMjMxLDQuMTY2LTQuMDg3LDUuNTcxYzAuMDAxLTAuMDAxLDAuMDAyLTAuMDAxLDAuMDAzLTAuMDAybDYuMTksNS4yMzhDMzYuOTcxLDM5"
+    "LjIwNSw0NCwzNCw0NCwyNEM0NCwyMi42NTksNDMuODYyLDIxLjM1LDQzLjYxMSwyMC4wODN6Ii8+Cjwvc3ZnPg=="
+)
+
+try:
+    is_logged_in = st.user.is_logged_in
+    auth_configured = True
+except Exception:
+    is_logged_in = False
+    auth_configured = False
+
+if not is_logged_in:
+    st.markdown(
+        f"""
+        <style>
+        div[data-testid="stAppViewContainer"] {{ background-color: #0e0e0e; }}
+        .login-card {{
+            max-width: 420px;
+            margin: 12vh auto 0 auto;
+            text-align: center;
+        }}
+        .login-card h1 {{
+            color: #f5f5f5;
+            font-size: 1.6rem;
+            margin-bottom: 0.4rem;
+        }}
+        .login-card p {{
+            color: #9a9a9a;
+            margin-bottom: 2rem;
+        }}
+        .st-key-google_login button {{
+            background-color: #1e1e1e !important;
+            color: #f5f5f5 !important;
+            border: 1px solid #3c3c3c !important;
+            border-radius: 999px !important;
+            padding: 0.6rem 1.5rem !important;
+            font-weight: 500 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+        }}
+        .st-key-google_login button::before {{
+            content: "";
+            background-image: url("data:image/svg+xml;base64,{GOOGLE_LOGO_B64}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }}
+        .st-key-google_login button:hover {{
+            border-color: #5f5f5f !important;
+            color: #ffffff !important;
+        }}
+        </style>
+        <div class="login-card">
+            <h1>📦 Shopee Mass Upload Builder</h1>
+            <p>続けるにはGoogleアカウントでログインしてください</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    _, mid, _ = st.columns([1, 1, 1])
+    with mid:
+        if auth_configured:
+            st.button("Googleで登録", key="google_login", on_click=st.login, use_container_width=True)
+        else:
+            st.button("Googleで登録", key="google_login", use_container_width=True, disabled=True)
+            st.caption(
+                "⚠️ Google認証が未設定です。`.streamlit/secrets.toml.example` を参考に "
+                "`.streamlit/secrets.toml` を作成し、Google OAuthクライアント情報を設定してください。"
+            )
+    st.stop()
+
+with st.sidebar:
+    user_label = st.user.get("email") or st.user.get("name") or "ユーザー"
+    st.markdown(f"👤 **{user_label}**")
+    if st.button("ログアウト"):
+        st.logout()
+
 st.title("📦 Shopee Mass Upload Excel作成アプリ（自動流し込み対応）")
 
 # 🟡 注意コメント + 補助画像

@@ -1,0 +1,7 @@
+# Streamlit secrets (contains real OAuth credentials — never commit)
+.streamlit/secrets.toml
+
+__pycache__/
+*.pyc
+.venv/
+venv/
